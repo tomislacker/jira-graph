@@ -4,6 +4,7 @@ util
 
 Contains utility classes/methods
 """
+import logging
 
 
 ISSUE_STATUS_COLORS = {
@@ -14,16 +15,24 @@ ISSUE_STATUS_COLORS = {
 }
 """Define fill colors for issues based on status"""
 
+log = logging.getLogger(__name__)
+"""Define a named logger"""
+
 
 def get_issue_blocks(issue, link_types=['Blocked'], raise_fail=True):
     """ Returns an tuple of blocking and blocked issues
     """
+    log.debug("get_issue_blocks({i}, [{links}])".format(
+        i=issue.key,
+        links=", ".join(link_types)))
+
     blocks = []
     blocked_by = []
 
     if not hasattr(issue.fields, 'issuelinks'):
         # This object was merely a reference and we must query the Jira
         # API to get the rest of it's data
+        log.debug("get_issue_blocks({i}): Updating issue".format(i=issue.key))
         issue.update()
 
     for linked_issue in issue.fields.issuelinks:
@@ -43,6 +52,9 @@ def get_issue_blocks(issue, link_types=['Blocked'], raise_fail=True):
                 raise NotImplementedError(
                         "Could not determine linkage direction")
 
+    log.debug("get_issue_blocks({i}): Found {c}".format(
+        i=issue.key,
+        c=len(blocks + blocked_by)))
     return (blocks, blocked_by)
 
 
