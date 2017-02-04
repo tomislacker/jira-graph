@@ -21,6 +21,11 @@ def get_issue_blocks(issue, link_types=['Blocked'], raise_fail=True):
     blocks = []
     blocked_by = []
 
+    if not hasattr(issue.fields, 'issuelinks'):
+        # This object was merely a reference and we must query the Jira
+        # API to get the rest of it's data
+        issue.update()
+
     for linked_issue in issue.fields.issuelinks:
         if linked_issue.type.name not in link_types:
             # Irrelevant issue link type
