@@ -17,3 +17,9 @@ JIRA_OPTS = {
 # will be necessary to set a local password within JIRA for your account.
 JIRA_AUTH = ('<username>', '<password>')
 ```
+
+## References
+### Jira
+- https://jira.readthedocs.io/en/master/examples.html#searching
+- https://confluence.atlassian.com/jirakb/creating-issues-via-direct-html-links-159474.html
+- https://answers.atlassian.com/questions/199842/function-in-jql-for-current-sprint
