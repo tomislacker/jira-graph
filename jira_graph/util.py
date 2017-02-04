@@ -6,6 +6,7 @@ Contains utility classes/methods
 """
 import logging
 import networkx as nx
+from jira.exceptions import JIRAError
 
 
 ISSUE_STATUS_COLORS = {
@@ -34,7 +35,16 @@ def get_issue_blocks(issue, link_types=['Blocked'], raise_fail=True):
         # This object was merely a reference and we must query the Jira
         # API to get the rest of it's data
         log.debug("get_issue_blocks({i}): Updating issue".format(i=issue.key))
-        issue.update()
+        try:
+            issue.update()
+        except JIRAError as e:
+            if e.status_code == 400 \
+                    and "You do not have permission" in e.text:
+                # Current user does not have permission within the project
+                # that this issue lives, ignore & return
+                return ([], [])
+            else:
+                raise
 
     for linked_issue in issue.fields.issuelinks:
         if linked_issue.type.name not in link_types:
