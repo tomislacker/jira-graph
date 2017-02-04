@@ -5,6 +5,7 @@ util
 Contains utility classes/methods
 """
 import logging
+import networkx as nx
 
 
 ISSUE_STATUS_COLORS = {
@@ -88,3 +89,49 @@ def get_issue_styling(issue, *args, **kwargs):
     })
 
     return styles
+
+
+def get_issue_graph(issue, graph=None, *args, **kwargs):
+    """ Recursively generates an issue graph
+    """
+    if graph is None:
+        # This is the initial issue
+        log.debug("get_issue_blocks({i}): Instantiating new directed graph")
+        graph = nx.DiGraph()
+
+    # Add the node if it's not present
+    if issue.key not in graph:
+        log.debug("get_issue_blocks: Adding {}".format(issue.key))
+        graph.add_node(issue.key,
+                       **get_issue_styling(issue))
+
+    # Enumerate blocked & blockers
+    blocks, blockers = get_issue_blocks(issue)
+
+    for b in blocks:
+        log.info("get_issue_blocks: {i} <- {b}".format(
+            i=issue.key,
+            b=b.key))
+    for b in blockers:
+        log.info("get_issue_blocks: {i} -> {b}".format(
+            i=issue.key,
+            b=b.key))
+
+    # Add the blocker nodes & recursive into them if they had
+    # not yet been added
+    for b in blocks + blockers:
+        if b.key not in graph:
+            # This issue is being seen for the first time, recurse
+            # into the issue to find additional blockers.
+            log.debug("Recursing into issue: {}".format(b.key))
+            get_issue_graph(b, graph, *args, **kwargs)
+
+    # Create the edges
+    log.debug("get_issue_blocks: Adding edges for {i}".format(i=issue.key))
+    for b in blocks:
+        graph.add_edge(b.key, issue.key)
+    for b in blockers:
+        graph.add_edge(issue.key, b.key)
+
+    # Return the graph
+    return graph
